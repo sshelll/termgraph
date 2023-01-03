@@ -18,7 +18,7 @@ func main() {
 	stableCanvas.AddComponent(component.NewBox(nil), canvas.NewPosition(0, 11, 100, 20), nil)
 	stableCanvas.AddComponent(component.NewBox(nil), canvas.NewPosition(101, 0, 201, 10), nil)
 	stableCanvas.AddComponent(component.NewBox(nil), canvas.NewPosition(101, 11, 201, 20), nil)
-	if err := stableCanvas.Draw(); err != nil {
+	if err := stableCanvas.Show(); err != nil {
 		log.Fatalln(err)
 	}
 }

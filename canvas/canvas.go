@@ -6,8 +6,8 @@ import (
 )
 
 type Canvas interface {
-	Draw() error
+	Show() error
 	AddComponent(component.Component, *Position, *tcell.Style)
-	SetSize(width, height int)
+	SetLayout(width, height int)
 	SetStyle(style tcell.Style)
 }
