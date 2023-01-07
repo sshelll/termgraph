@@ -3,6 +3,7 @@ module github.com/sshelll/termgraph
 go 1.19
 
 require (
+	github.com/AlekSi/pointer v1.2.0
 	github.com/gdamore/tcell/v2 v2.5.4
 	github.com/mattn/go-runewidth v0.0.14
 )

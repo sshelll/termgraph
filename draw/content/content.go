@@ -21,6 +21,19 @@ func SetContentV(s tcell.Screen, x, y int, content string, style tcell.Style) {
 	}
 }
 
+func SetWrappedContentH(s tcell.Screen, x, y int, content string, lineWidth int, style tcell.Style) {
+	curX := x
+	for _, c := range content {
+		r, width, comb := util.ReplaceRuneWithComb(c)
+		s.SetContent(curX, y, r, comb, style)
+		curX += width
+		if curX > lineWidth {
+			curX = x
+			y++
+		}
+	}
+}
+
 func FillContentH(s tcell.Screen, x1, x2, y int, r rune, style tcell.Style) {
 	ch, width, comb := util.ReplaceRuneWithComb(r)
 	for col := x1; col <= x2; col += width {

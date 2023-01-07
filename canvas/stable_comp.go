@@ -15,7 +15,7 @@ func (c *stableComponent) Position() *Position {
 }
 
 func (c *stableComponent) Draw(screen tcell.Screen) error {
-	return c.comp.Draw(screen, c.style)
+	return c.comp.Draw(screen, c.style, c.showName)
 }
 
 func (c *stableComponent) setLayout() {

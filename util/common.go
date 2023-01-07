@@ -6,3 +6,13 @@ func SwapByOrder(i1, i2 int) (min, max int) {
 	}
 	return i2, i1
 }
+
+func CutString(str string, cutTo int) string {
+	if len(str) <= cutTo {
+		return str
+	}
+	if cutTo <= 0 {
+		return ""
+	}
+	return str[:cutTo]
+}

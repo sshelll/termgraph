@@ -4,22 +4,18 @@ import "github.com/gdamore/tcell/v2"
 
 type Component interface {
 	SetName(string)
-	GetName() *string
 	SetLayout(x1, y1, x2, y2 int)
-	Draw(tcell.Screen, tcell.Style) error
+	Draw(s tcell.Screen, style tcell.Style, drawName bool) error
+	// TODO: how to update component properly if I wanna design a live chart component?
 }
 
 type baseComponent struct {
-	Name           *string
+	name           *string
 	x1, y1, x2, y2 int
 }
 
 func (c *baseComponent) SetName(name string) {
-	c.Name = &name
-}
-
-func (c *baseComponent) GetName() *string {
-	return c.Name
+	c.name = &name
 }
 
 func (c *baseComponent) SetLayout(x1, y1, x2, y2 int) {
