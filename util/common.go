@@ -16,3 +16,10 @@ func CutString(str string, cutTo int) string {
 	}
 	return str[:cutTo]
 }
+
+func If(cond bool, a, b interface{}) interface{} {
+	if cond {
+		return a
+	}
+	return b
+}

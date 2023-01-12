@@ -6,120 +6,167 @@ import (
 	"github.com/sshelll/termgraph/util"
 )
 
-type DrawBoxOpt struct {
-	Title       *string
-	TitleOffset int
+type BoxDrawer struct {
+	s              tcell.Screen
+	x1, y1, x2, y2 int
 
-	Text              *string
-	AutoCut, AutoWrap bool
-	MarginU, MarginB  int
-	MarginL, MarginR  int
+	title       *string
+	titleOffset int
 
-	TextStyle, TitleStyle *tcell.Style
+	text              *string
+	autoCut, autoWrap bool
+	marginU, marginB  int
+	marginL, marginR  int
+
+	style, textStyle, titleStyle *tcell.Style
 }
 
-func DrawBox(s tcell.Screen, x1, y1, x2, y2 int, style tcell.Style, opt *DrawBoxOpt) {
-	drawer := &boxDrawer{}
-	drawer.Draw(s, x1, y1, x2, y2, style, opt)
+func NewBoxDrawer(s tcell.Screen, x1, y1, x2, y2 int) *BoxDrawer {
+	return &BoxDrawer{
+		s:  s,
+		x1: x1,
+		y1: y1,
+		x2: x2,
+		y2: y2,
+	}
 }
 
-type boxDrawer struct {
+func (b *BoxDrawer) SetTitle(t string, offset int) *BoxDrawer {
+	b.title = &t
+	b.titleOffset = offset
+	return b
 }
 
-func (b *boxDrawer) Draw(s tcell.Screen, x1, y1, x2, y2 int, style tcell.Style, opt *DrawBoxOpt) {
+func (b *BoxDrawer) SetText(text string, autoCut, autoWrap bool) *BoxDrawer {
+	b.text = &text
+	b.autoCut = autoCut
+	b.autoWrap = autoWrap
+	return b
+}
 
-	// param check
-	x1, x2 = util.SwapByOrder(x1, x2)
-	y1, y2 = util.SwapByOrder(y1, y2)
-	b.drawBox(s, x1, y1, x2, y2, style, opt)
+func (b *BoxDrawer) SetTextMargin(up, bottom, left, right int) *BoxDrawer {
+	b.marginU = up
+	b.marginB = bottom
+	b.marginL = left
+	b.marginR = right
+	return b
+}
 
-	if opt == nil {
-		return
+func (b *BoxDrawer) GetTextMargin() (up, bottom, left, right int) {
+	return b.marginU, b.marginB, b.marginL, b.marginR
+}
+
+func (b *BoxDrawer) SetBoxStyle(s tcell.Style) *BoxDrawer {
+	b.style = &s
+	return b
+}
+
+func (b *BoxDrawer) SetTitleStyle(s tcell.Style) *BoxDrawer {
+	b.titleStyle = &s
+	return b
+}
+
+func (b *BoxDrawer) SetTextStyle(s tcell.Style) *BoxDrawer {
+	b.textStyle = &s
+	return b
+}
+
+func (b *BoxDrawer) Draw() {
+
+	b.init()
+	b.x1, b.x2 = util.SwapByOrder(b.x1, b.x2)
+	b.y1, b.y2 = util.SwapByOrder(b.y1, b.y2)
+
+	b.DrawBorder()
+
+	if b.title != nil {
+		content.SetContentH(b.s, b.x1+b.titleOffset, b.y1, *b.title, *b.style)
 	}
 
-	// draw title
-	if opt.Title != nil {
-		content.SetContentH(s, x1+opt.TitleOffset, y1, *opt.Title, style)
-	}
-
-	// draw content
-	if opt.Text != nil {
-		if opt.TextStyle == nil {
-			opt.TextStyle = &style
-		}
-		b.drawText(s, x1+1, y1+1, x2-1, y2-1, style, opt)
+	if b.text != nil {
+		b.DrawText()
 	}
 
 }
 
-func (b *boxDrawer) drawBox(s tcell.Screen, x1, y1, x2, y2 int, style tcell.Style, opt *DrawBoxOpt) {
+func (b *BoxDrawer) DrawBorder() {
 
+	b.init()
 	// fill background
-	for row := y1; row <= y2; row++ {
-		for col := x1; col <= x2; col++ {
-			s.SetContent(col, row, ' ', nil, style)
+	for row := b.y1; row <= b.y2; row++ {
+		for col := b.x1; col <= b.x2; col++ {
+			b.s.SetContent(col, row, ' ', nil, *b.style)
 		}
 	}
 
 	// draw horizonal borders
-	content.FillContentH(s, x1, x2, y1, tcell.RuneHLine, style)
-	content.FillContentH(s, x1, x2, y2, tcell.RuneHLine, style)
+	content.FillContentH(b.s, b.x1, b.x2, b.y1, tcell.RuneHLine, *b.style)
+	content.FillContentH(b.s, b.x1, b.x2, b.y2, tcell.RuneHLine, *b.style)
 
 	// draw vertial borders
-	// NOTE: set start y coordinate as 'y1+1' to remain the corner cell.
-	content.FillContentV(s, y1+1, y2, x1, tcell.RuneVLine, style)
-	content.FillContentV(s, y1+1, y2, x2, tcell.RuneVLine, style)
+	content.FillContentV(b.s, b.y1, b.y2, b.x1, tcell.RuneVLine, *b.style)
+	content.FillContentV(b.s, b.y1, b.y2, b.x2, tcell.RuneVLine, *b.style)
 
 	// draw corners if necessary
-	if y1 != y2 && x1 != x2 {
-		s.SetContent(x1, y1, tcell.RuneULCorner, nil, style)
-		s.SetContent(x2, y1, tcell.RuneURCorner, nil, style)
-		s.SetContent(x1, y2, tcell.RuneLLCorner, nil, style)
-		s.SetContent(x2, y2, tcell.RuneLRCorner, nil, style)
+	if b.y1 != b.y2 && b.x1 != b.x2 {
+		b.s.SetContent(b.x1, b.y1, tcell.RuneULCorner, nil, *b.style)
+		b.s.SetContent(b.x2, b.y1, tcell.RuneURCorner, nil, *b.style)
+		b.s.SetContent(b.x1, b.y2, tcell.RuneLLCorner, nil, *b.style)
+		b.s.SetContent(b.x2, b.y2, tcell.RuneLRCorner, nil, *b.style)
 	}
 
 }
 
-func (b *boxDrawer) drawText(s tcell.Screen, x1, y1, x2, y2 int, style tcell.Style, opt *DrawBoxOpt) {
+func (b *BoxDrawer) DrawScrollBar(offset, barHeight int) {
+	b.init()
+	y1 := util.Min(b.y1+1+offset, b.y2-barHeight)
+	content.FillContentV(b.s, y1, y1+barHeight-1, b.x2, tcell.RuneBlock, *b.style)
+}
 
-	if opt == nil {
-		return
-	}
+func (b *BoxDrawer) DrawText() {
 
-	if opt.MarginL < 0 || opt.MarginR < 0 || opt.MarginU < 0 || opt.MarginB < 0 {
+	b.init()
+	// text pos should be 'inner'
+	x1, y1, x2, y2 := b.x1+1, b.y1+1, b.x2-1, b.y2-1
+
+	if b.marginL < 0 || b.marginR < 0 || b.marginU < 0 || b.marginB < 0 {
 		panic("margin should not be negative")
 	}
 
-	textMaxWidth := x2 - x1 + 1 - opt.MarginL - opt.MarginR
-	textMaxHeight := y2 - y1 + 1 - opt.MarginU - opt.MarginB
+	textMaxWidth := x2 - x1 + 1 - b.marginL - b.marginR
+	textMaxHeight := y2 - y1 + 1 - b.marginU - b.marginB
 
 	if textMaxWidth <= 0 || textMaxHeight <= 0 {
 		panic("margin too wide")
 	}
 
 	// single line
-	if !opt.AutoWrap {
-		cuttedContent := *opt.Text
-		if opt.AutoCut { // cut content
-			cuttedContent = b.cutBoxText(cuttedContent, textMaxWidth)
+	if !b.autoWrap {
+		cuttedContent := *b.text
+		if b.autoCut { // cut content
+			cuttedContent = util.CutString(cuttedContent, textMaxWidth)
 		}
-		content.SetContentH(s, x1+opt.MarginL, y1+opt.MarginU, cuttedContent, *opt.TextStyle)
+		content.SetContentH(b.s, x1+b.marginL, y1+b.marginU, cuttedContent, *b.textStyle)
 		return
 	}
 
-	cuttedContent := *opt.Text
-	if opt.AutoCut {
-		cuttedContent = b.cutBoxText(cuttedContent, textMaxHeight*textMaxWidth)
+	cutted := *b.text
+	if b.autoCut {
+		cutted = util.CutString(cutted, textMaxHeight*textMaxWidth)
 	}
 
-	content.SetWrappedContentH(s, x1+opt.MarginL, y1+opt.MarginU, cuttedContent, textMaxWidth, *opt.TextStyle)
+	content.SetWrappedContentH(b.s, x1+b.marginL, y1+b.marginU, cutted, textMaxWidth, *b.textStyle)
 
 }
 
-func (b *boxDrawer) cutBoxText(ori string, max int) string {
-	cutted := util.CutString(ori, max-3)
-	if max > 3 {
-		cutted += "..."
+func (b *BoxDrawer) init() {
+	if b.style == nil {
+		b.style = &tcell.StyleDefault
 	}
-	return cutted
+	if b.textStyle == nil {
+		b.textStyle = b.style
+	}
+	if b.titleStyle == nil {
+		b.titleStyle = b.style
+	}
 }
